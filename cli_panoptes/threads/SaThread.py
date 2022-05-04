@@ -2,7 +2,7 @@ import subprocess
 import threading
 import time
 from queue import Queue
-from utile.proto import Proto
+from utile.network import Proto
 
 
 class SaThreadMaster(threading.Thread):

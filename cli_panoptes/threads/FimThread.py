@@ -1,28 +1,27 @@
-import sqlite3
 import threading
 import time
 from queue import Queue
 
-from utile import utile_data
-from utile import utile_data as data
-from utile import utiles_fim
-from utile.proto import Proto
+from utile.network import Proto
+
+from utile import utile_fim
 
 
 class FimThreadMaster(threading.Thread):
 
-    def __init__(self, config_fim: any, queue: Queue):
+    def __init__(self, config_fim: any, queue: Queue, ref_images: dict):
         super().__init__()
         self.daemon = True
 
         self.config_fim = config_fim
         self.queue = queue
+        self.ref_images = ref_images
 
     def run(self):
         threads = []
 
         for row in self.config_fim:
-            slave = FimThreadSlave(row, self.queue)
+            slave = FimThreadSlave(row, self.queue, self.ref_images)
             threads.append(slave)
             slave.start()
 
@@ -38,12 +37,13 @@ class FimThreadMaster(threading.Thread):
 
 
 class FimThreadSlave(threading.Thread):
-    def __init__(self, fim_config, queue: Queue):
+    def __init__(self, fim_config, queue: Queue, ref_images: dict):
         super().__init__()
         self.daemon = True
 
         self.queue = queue
         self.fim_config = fim_config
+        self.ref_images = ref_images
         self.fim_rule_id = fim_config[0]
         self.fim_rule_name = fim_config[1]
         self.path = fim_config[2]
@@ -66,14 +66,16 @@ class FimThreadSlave(threading.Thread):
         self.fim_set_name = fim_config[20]
         self.schedule = fim_config[21]
 
-
-
     def run(self):
         print(f'Starting thread : {self.path}')
         while True:
-            utiles_fim.capture_image_stat_files(self.path)
-            info = utiles_fim.comparaison_image()
+
+            stat_files = utile_fim.capture_image_stat_files(self.path)
+            self.queue.put([Proto.STAT, stat_files])
+
+            info = utile_fim.compare_image(stat_files, self.ref_images, [self.fim_config[2:18]])
+
             if info is not None:
-                event = [Proto.FIM_EVENT, info]
-                self.queue.put(event)
+                self.queue.put([Proto.FIM_EVENT, info])
+
             time.sleep(self.schedule)

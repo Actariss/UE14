@@ -7,50 +7,28 @@ from time import time
 from utile import utile_data as data
 
 
-def get_image_stat_files(filename):
-    ref_image = {}
+def get_file_infos(filename):
+    file_infos = {}
     stat_info = os.stat(filename)
-    ref_image['file_inode'] = stat_info.st_ino
-    ref_image['parent_id'] = os.stat(os.path.abspath(os.path.join(filename, os.pardir))).st_ino
-    ref_image['file_name'] = filename
-    ref_image['file_type'] = type_file(stat_info.st_mode)
-    ref_image['file_mode'] = filemode(stat_info.st_mode)
-    ref_image['file_link'] = stat_info.st_nlink
-    ref_image['file_uid'] = stat_info.st_uid
-    ref_image['file_gid'] = stat_info.st_gid
-    ref_image['file_size'] = stat_info.st_size
-    ref_image['file_atime'] = int(stat_info.st_atime)
-    ref_image['file_mtime'] = int(stat_info.st_mtime)
-    ref_image['file_ctime'] = int(stat_info.st_ctime)
-    ref_image['file_md5'] = md5_file(filename)
-    ref_image['file_SHA1'] = sha1_file(filename)
-    return ref_image
-
-
-def get_image_ref(filename):
-    ref_image = {}
-    stat_info = os.stat(filename)
-    ref_image['file_inode'] = stat_info.st_ino
-    ref_image['datetime_image'] = int(time())
-    ref_image['parent_id'] = os.stat(os.path.abspath(os.path.join(filename, os.pardir))).st_ino
-    ref_image['file_name'] = filename
-    ref_image['file_type'] = type_file(stat_info.st_mode)
-    ref_image['file_mode'] = filemode(stat_info.st_mode)
-    ref_image['file_nlink'] = stat_info.st_nlink
-    ref_image['file_uid'] = stat_info.st_uid
-    ref_image['file_gid'] = stat_info.st_gid
-    ref_image['file_size'] = stat_info.st_size
-    ref_image['file_atime'] = int(stat_info.st_atime)
-    ref_image['file_mtime'] = int(stat_info.st_mtime)
-    ref_image['file_ctime'] = int(stat_info.st_ctime)
-    ref_image['file_md5'] = md5_file(filename)
-    ref_image['file_SHA1'] = sha1_file(filename)
-    return ref_image
+    file_infos['file_inode'] = stat_info.st_ino
+    file_infos['parent_id'] = os.stat(os.path.abspath(os.path.join(filename, os.pardir))).st_ino
+    file_infos['file_name'] = filename
+    file_infos['file_type'] = type_file(stat_info.st_mode)
+    file_infos['file_mode'] = filemode(stat_info.st_mode)
+    file_infos['file_link'] = stat_info.st_nlink
+    file_infos['file_uid'] = stat_info.st_uid
+    file_infos['file_gid'] = stat_info.st_gid
+    file_infos['file_size'] = stat_info.st_size
+    file_infos['file_atime'] = int(stat_info.st_atime)
+    file_infos['file_mtime'] = int(stat_info.st_mtime)
+    file_infos['file_ctime'] = int(stat_info.st_ctime)
+    file_infos['file_md5'] = md5_file(filename)
+    file_infos['file_SHA1'] = sha1_file(filename)
+    return file_infos
 
 
 def type_file(mode):
     """
-
     :param mode: 'D' --> Directory, R --> Regular file, B --> Block file, C --> Character file, L --> Link file
     :return:
     """
@@ -87,20 +65,27 @@ def sha1_file(filename=''):
 
 
 def capture_image_de_reference(pattern):
+    files_infos = {}
     for i in iglob(pattern, recursive=True):
-        data.insert_db('ref_images', get_image_ref(i))
+        file_infos = get_file_infos(i)
+        file_infos['datetime_image'] = int(time())
+        files_infos[file_infos["file_inode"]] = file_infos
+    return files_infos
 
 
 def capture_image_stat_files(pattern):
-    print(pattern)
+    files_infos = {}
     for i in iglob(pattern, recursive=True):
-        data.insert_db('stat_files', get_image_stat_files(i))
+        file_infos = get_file_infos(i)
+        files_infos[file_infos["file_inode"]] = file_infos
+    return files_infos
 
 
-def comparaison_image():
+def compare_image(stat_files, ref_images, rules):
+
     lister = []
     db_conn = data.connect_db()
-    donnes_ref_image = data.select_db(db_conn, 'select max(datetime_image), * from ref_images group by file_inode' , ())
+    donnes_ref_image = data.select_db(db_conn, 'select max(datetime_image), * from ref_images group by file_inode', ())
     # boucle sur tuple ou l'inode stat files et ref image sont les memes
     for tuple_fichier_scanne in donnes_ref_image:
         donne_inode_scanne = data.select_db(db_conn, f'select * from stat_files where file_inode = ? ',
@@ -163,32 +148,5 @@ def comparaison_image():
             vu que c'est un index out of range il msemble
             """
     if len(lister) > 0:
-        return (lister)
+        return lister
 
-
-def main():
-    pass
-    # delete pour repartir sur des bonnes bases
-    # data.delete_from_db("Delete from ref_images")
-    # data.delete_from_db("Delete from stat_files")
-    # data.delete_from_db("Delete from fim_rules")
-    # # insertion juste pour l'exemple de tester la fonction
-    # data.insert_mais_plus_simple(
-    #     "Insert into fim_rules values (1, 'regle oui','/home/student/Desktop', 576191, True, True, True, True, True, True, True, True, True, True, True, True, True, TRUE)")
-    # # capture_image_de_reference('/home/student/Desktop/**')
-    # capture_image_stat_files('/home/student/Desktop/**')
-    # comparaison_image()
-
-
-if __name__ == '__main__':
-    main()
-"""stat_info = stat('tests.py') 
-print(stat_info)
-²
-parent_path = path.abspath(path.join('tests.py', pardir))
-parent_info = stat(parent_path)
-print(f"inode de tests.py : {stat_info.st_ino}")
-print(f"inode de {parent_path}: {parent_info.st_ino}")
-print(f"{parent_path}/tests.py")
-stat_info = stat(f'{parent_path}/tests.py')
-print(stat_info)"""

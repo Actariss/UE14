@@ -3,7 +3,7 @@ import threading
 from queue import Queue
 
 from utile import utile_data as data
-from utile.proto import Proto
+from utile.network import Proto
 
 
 class EventMaster(threading.Thread):
@@ -18,19 +18,29 @@ class EventMaster(threading.Thread):
         while True:
             if not self.queue.empty():
                 event = self.queue.get()
+
                 protocol = event[0]
                 infos = event[1]
+
                 if protocol == Proto.SA_EVENT:
                     date = str(datetime.datetime.now())
                     data.simple_insert_db(self.db_conn,
-                                          f"insert into sa_events (sa_set_id, sa_job_id, datetime_event, except_active)"
+                                          f"INSERT INTO sa_events (sa_set_id, sa_job_id, datetime_event, except_active)"
                                           f" VALUES (?,?,?,?)", (infos[0], infos[1], date, True))
                     # Insert into SA_Event
+
                 elif protocol == Proto.FIM_EVENT:
                     date = str(datetime.datetime.now())
                     for erreur in infos:
                         data.simple_insert_db(self.db_conn,
-                                              f"insert into fim_events (fim_set_id, fim_rule_id, image_id, file_inode, datetime_event, except_msg, except_active)"
+                                              f"INSERT INTO fim_events (fim_set_id, fim_rule_id, image_id, file_inode, datetime_event, except_msg, except_active)"
                                               f" VALUES (?,?,?,?,?,?,?)", (1, 1, 1, 1, date, erreur, True))
 
                     # Insert into FIM_Event
+                elif protocol == Proto.STAT:
+                    for file_infos in infos:
+                        data.insert_db('stat_files', file_infos)
+
+                elif protocol == Proto.IMG:
+                    for file_infos in infos:
+                        data.insert_db('ref_images', file_infos)

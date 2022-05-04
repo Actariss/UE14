@@ -1,5 +1,16 @@
 import socket
 import threading
+from enum import Enum
+
+
+class Proto(Enum):
+    SA_EVENT = 0,
+    FIM_EVENT = 1,
+    IMG = 2,
+    STAT = 3,
+    # NEW
+    LD_FIM = 4,
+    LD_SA = 5
 
 
 class DataSender(threading.Thread):
