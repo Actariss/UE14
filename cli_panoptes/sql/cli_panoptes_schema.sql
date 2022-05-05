@@ -29,7 +29,7 @@ CREATE TABLE stat_files
     file_name  VARCHAR,
     file_type  TEXT,
     file_mode  VARCHAR,
-    file_link  INTEGER,
+    file_nlink  INTEGER,
     file_uid   INTEGER,
     file_gid   INTEGER,
     file_size  INTEGER,

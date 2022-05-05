@@ -8,7 +8,7 @@ BEGIN
         file_name = new.file_name,
         file_type = new.file_type,
         file_mode = new.file_mode,
-        file_link = new.file_link,
+        file_nlink = new.file_nlink,
         file_uid = new.file_uid,
         file_gid = new.file_gid,
         file_size = new.file_size,

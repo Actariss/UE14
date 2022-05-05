@@ -33,27 +33,43 @@ def get_configuration_from_db(db_filename: str):
 
     return config_sa, config_fim
 
+def get_ref_images(db_filename: str):
+    ref_images = {}
+    with utile_data.connect_db(db_filename) as db_conn:
+        tuples_ref_images = utile_data.select_db(db_conn,'SELECT max(datetime_image), * FROM ref_images GROUP BY file_inode', ())
+        for row in tuples_ref_images:
+            ref_images[str(row[2])] = [row[2:]]
+
+        return ref_images
+
 def main():
     db_filename = 'data/cli_panoptes.sqlite'
     client_configuration = load_configuration_file()
     path_ref_image = client_configuration.value('GENERAL', 'PATH')
-    q = Queue()
+    scan_at_launch = client_configuration.value('GENERAL', 'SCAN_AT_LAUNCH')
 
+    q = Queue()
     event_thread = EventMaster(q, db_filename)
 
-    ref_images = utile_fim.capture_image_de_reference(path_ref_image)
-    q.put([Proto.IMG, ref_images])
+
+    if scan_at_launch:
+        ref_images = utile_fim.capture_image_de_reference(path_ref_image)
+        q.put([Proto.IMG, ref_images])
+        client_configuration.set({'SCAN_AT_LAUNCH':False})
+        client_configuration.save()
+    else:
+        ref_images = get_ref_images(db_filename)
 
     config_sa, config_fim = get_configuration_from_db(db_filename)
-    sa_thread = SaThreadMaster(config_sa, q)
+    # sa_thread = SaThreadMaster(config_sa, q)
     fim_thread = FimThreadMaster(config_fim, q, ref_images)
 
     event_thread.start()
-    sa_thread.start()
+    # sa_thread.start()
     fim_thread.start()
 
     event_thread.join()
-    sa_thread.join()
+    # sa_thread.join()
     fim_thread.join()
 
 
