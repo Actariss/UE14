@@ -38,9 +38,11 @@ class EventMaster(threading.Thread):
 
                     # Insert into FIM_Event
                 elif protocol == Proto.STAT:
-                    for file_infos in infos:
+                    # VALUES car les données passées sont sous la forme [inode]:[file_info]
+                    for file_infos in infos.values():
                         data.insert_db('stat_files', file_infos)
 
                 elif protocol == Proto.IMG:
-                    for file_infos in infos:
+                    # VALUES car les données passées sont sous la forme [inode]:[file_info]
+                    for file_infos in infos.values():
                         data.insert_db('ref_images', file_infos)

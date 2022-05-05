@@ -82,7 +82,7 @@ def capture_image_stat_files(pattern):
 
 
 def compare_image(stat_files, ref_images, rules):
-
+    # TODO compare
     lister = []
     db_conn = data.connect_db()
     donnes_ref_image = data.select_db(db_conn, 'select max(datetime_image), * from ref_images group by file_inode', ())
