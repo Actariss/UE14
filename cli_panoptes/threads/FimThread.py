@@ -72,8 +72,8 @@ class FimThreadSlave(threading.Thread):
 
             stat_files = utile_fim.capture_image_stat_files(self.path)
             self.queue.put([Proto.STAT, stat_files])
-
-            info = utile_fim.compare_image(stat_files, self.ref_images, [self.fim_config[4:18]])
+            print(self.fim_config[4:18])
+            info = utile_fim.compare_image(stat_files, self.ref_images, self.fim_config[4:18])
 
             if info is not None:
                 self.queue.put([Proto.FIM_EVENT, info])

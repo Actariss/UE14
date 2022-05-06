@@ -121,7 +121,7 @@ CREATE TABLE sa_events
     FOREIGN KEY (sa_job_id) REFERENCES sa_jobs (sa_job_id)
 );
 
-INSERT INTO fim_rules (fim_rule_id, fim_rule_name, path, start_inode, inode, parent, name, type, mode, nlink, uid, gid, size, atime, mtime, md5, sha1, ctime) VALUES (1, 'regle oui', '/home/student/Desktop/**', 576191, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1);
+INSERT INTO fim_rules (fim_rule_id, fim_rule_name, path, start_inode, inode, parent, name, type, mode, nlink, uid, gid, size, atime, mtime, md5, sha1, ctime) VALUES (1, 'regle oui', '/home/q210079/Desktop/**', 576191, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1);
 
 
 INSERT INTO sa_sets (sa_set_id, sa_job_id, sa_set_name, schedule) VALUES (1, 1, 'every 5 seconds', 5);

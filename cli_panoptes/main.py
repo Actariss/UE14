@@ -10,6 +10,7 @@ from cli_panoptes.threads.SaThread import SaThreadMaster
 from utile import utile_fim, utile_data
 from utile.network import Proto
 
+
 def load_configuration_file() -> ConfigWrapper:
     if not os.path.isfile('./configuration/app.config_client.toml'):
         client_configuration = Config('./configuration/app.config_client.toml')
@@ -26,6 +27,7 @@ def load_configuration_file() -> ConfigWrapper:
 
     return ConfigWrapper(client_configuration)
 
+
 def get_configuration_from_db(db_filename: str):
     with utile_data.connect_db(db_filename) as db_conn:
         config_sa = utile_data.select_db(db_conn,'SELECT sa_set_id, se.sa_job_id, sa_set_name, schedule, sa_job_name, command_script, expected_result, alert_message FROM sa_sets se JOIN sa_jobs sj ON se.sa_job_id = sj.sa_job_id',())
@@ -33,12 +35,28 @@ def get_configuration_from_db(db_filename: str):
 
     return config_sa, config_fim
 
+
 def get_ref_images(db_filename: str):
     ref_images = {}
     with utile_data.connect_db(db_filename) as db_conn:
         tuples_ref_images = utile_data.select_db(db_conn,'SELECT max(datetime_image), * FROM ref_images GROUP BY file_inode', ())
         for row in tuples_ref_images:
-            ref_images[str(row[2])] = [row[2:]]
+            file_infos = {}
+            file_infos['file_inode'] = row[2]
+            file_infos['parent_id'] = row[4]
+            file_infos['file_name'] = row[5]
+            file_infos['file_type'] = row[6]
+            file_infos['file_mode'] = row[7]
+            file_infos['file_nlink'] = row[8]
+            file_infos['file_uid'] = row[9]
+            file_infos['file_gid'] = row[10]
+            file_infos['file_size'] = row[11]
+            file_infos['file_atime'] = row[12]
+            file_infos['file_mtime'] = row[13]
+            file_infos['file_ctime'] = row[14]
+            file_infos['file_md5'] = row[15]
+            file_infos['file_SHA1'] = row[16]
+            ref_images[str(row[2])] = file_infos
 
         return ref_images
 

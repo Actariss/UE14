@@ -83,73 +83,65 @@ def capture_image_stat_files(pattern):
 
 
 def compare_image(stat_files, ref_images, rules):
-    print(f'Got compare : {rules} -> {stat_files} and {ref_images}')
-    pass
-    # lister = []
-    # db_conn = data.connect_db()
-    # donnes_ref_image = data.select_db(db_conn, 'select max(datetime_image), * from ref_images group by file_inode', ())
-    # # boucle sur tuple ou l'inode stat files et ref image sont les memes
-    # for tuple_fichier_scanne in donnes_ref_image:
-    #     donne_inode_scanne = data.select_db(db_conn, f'select * from stat_files where file_inode = ? ',
-    #                                         (tuple_fichier_scanne[1],))
-    #     donne_inode_image = data.select_db(db_conn, f'select * from ref_images where file_inode = ? ',
-    #                                        (tuple_fichier_scanne[1],))
-    #     # exemple d'un check uniquement sur name :
-    #     regles_a_check = data.select_db(db_conn,
-    #                                     f"Select * from fim_rules ", ())
-    #     erreur = ""
-    #     # where start_inode={tuple_fichier_scanne[1]}")
-    #     try:
-    #         if regles_a_check[0][6] == 1 and donne_inode_scanne[0][2] != donne_inode_image[0][4]:
-    #             erreur += f"{donne_inode_image[0][4]} a changé de nom en {donne_inode_scanne[0][2]} "
-    #         # pour faire effet, il faut arrete de remplacer les anciennes images par des nouvelles dans le main
-    #         if regles_a_check[0][5] == 1 and donne_inode_scanne[0][1] != donne_inode_image[0][3]:
-    #             erreur += f"Le fichier parent de {donne_inode_image[0][4]} a changé "
-    #         # check du parent
-    #         if regles_a_check[0][7] == 1 and donne_inode_scanne[0][3] != donne_inode_image[0][5]:
-    #             erreur += f"Le type de {donne_inode_image[0][4]} a changé "
-    #         # check type
-    #         if regles_a_check[0][8] == 1 and donne_inode_scanne[0][4] != donne_inode_image[0][6]:
-    #             erreur += f"Le mode de {donne_inode_image[0][4]} a changé "
-    #         # check mode
-    #         if regles_a_check[0][9] == 1 and donne_inode_scanne[0][5] != donne_inode_image[0][7]:
-    #             erreur += f"Le nlink de {donne_inode_image[0][4]} a changé "
-    #         # check nlink
-    #         if regles_a_check[0][10] == 1 and donne_inode_scanne[0][6] != donne_inode_image[0][8]:
-    #             erreur += f"Le uid de {donne_inode_image[0][4]} a changé "
-    #         # check uid
-    #         if regles_a_check[0][11] == 1 and donne_inode_scanne[0][7] != donne_inode_image[0][9]:
-    #             erreur += f"Le gid de {donne_inode_image[0][4]} a changé "
-    #         # check gid
-    #         if regles_a_check[0][12] == 1 and donne_inode_scanne[0][8] != donne_inode_image[0][10]:
-    #             erreur += f"La taille de {donne_inode_image[0][4]} a changé "
-    #         # check size
-    #         if regles_a_check[0][13] == 1 and donne_inode_scanne[0][9] != donne_inode_image[0][11]:
-    #             erreur += f"Le atime de {donne_inode_image[0][4]} a changé "
-    #         # check atime
-    #         if regles_a_check[0][14] == 1 and donne_inode_scanne[0][10] != donne_inode_image[0][12]:
-    #             erreur += f"Le mtime de {donne_inode_image[0][4]} a changé "
-    #         # check mtime
-    #
-    #         # check ctime !!!!! a ajouter à la bd !!!!!!!!!!!!!!!!!!!!!!!!!!!
-    #         if regles_a_check[0][15] == 1 and donne_inode_scanne[0][12] != donne_inode_image[0][14]:
-    #             erreur += f"Le hash md5 de {donne_inode_image[0][4]} a changé "
-    #         # check md5
-    #         if regles_a_check[0][16] == 1 and donne_inode_scanne[0][13] != donne_inode_image[0][15]:
-    #             erreur += f"Le hash sha de {donne_inode_image[0][4]} a changé "
-    #         # check sha
-    #         if regles_a_check[0][17] == 1 and donne_inode_scanne[0][11] != donne_inode_image[0][13]:
-    #             erreur += f"Le ctime de {donne_inode_image[0][4]} a changé "
-    #         if len(erreur) > 0:
-    #             lister.append(erreur)
-    #
-    #     except IndexError as e:
-    #         pass
-    #         """
-    #         ça veut dire qu'il y a pas de règles ou qu'un truc est vide jcrois
-    #         vu que c'est un index out of range il msemble
-    #         """
-    #
-    # if len(lister) > 0:
-    #     return lister
+    if rules[2]:
+        print(f'Got compare : {rules} -> {stat_files} and {ref_images}')
+    lister = []
+    # boucle sur tuple ou l'inode stat files et ref image sont les memes
+    try:
+        for inode in stat_files.keys():
+            if inode in ref_images.keys():
+                erreur = ""
+    # where start_inode={tuple_fichier_scanne[1]}")
+                if rules[2] and stat_files[inode]["file_name"] != ref_images[inode]["file_name"]:
+                    erreur += f"{ref_images[inode]['file_name']} a changé de nom en {stat_files[inode]['file_name']} "
+                # pour faire effet, il faut arrete de remplacer les anciennes images par des nouvelles dans le main
+                if rules[1] and stat_files[inode]["parent_id"] != ref_images[inode]["parent_id"]:
+                    erreur += f"Le fichier parent de {stat_files[inode]['file_name']} a changé en {stat_files[inode]['parent_id']}"
+                # # check du parent
+                if rules[3] and stat_files[inode]['file_type'] != ref_images[inode]["file_type"]:
+                    erreur += f"Le type de {stat_files[inode]['file_name']} a changé en {stat_files[inode]['file_type']}"
+                # # check type
+                if rules[4] and stat_files[inode]['file_mode'] != ref_images[inode]["file_mode"]:
+                    erreur += f"Le mode de {stat_files[inode]['file_name']} a changé en {stat_files[inode]['file_mode']}"
+                # # check mode
+                if rules[5] and stat_files[inode]['file_nlink'] != ref_images[inode]["file_nlink"]:
+                    erreur += f"Le nlink de {stat_files[inode]['file_name']} a changé en {stat_files[inode]['file_nlink']}"
+                # # check nlink
+                if rules[6] and stat_files[inode]['file_uid'] != ref_images[inode]["file_uid"]:
+                    erreur += f"Le uid de {stat_files[inode]['file_name']} a changé en {stat_files[inode]['file_uid']}"
+                # # check uid
+                if rules[7] and stat_files[inode]['file_gid'] != ref_images[inode]["file_gid"]:
+                    erreur += f"Le gid de {stat_files[inode]['file_name']} a changé en {stat_files[inode]['file_gid']}"
+                # # check gid
+                if rules[8] and stat_files[inode]['file_size'] != ref_images[inode]["file_size"]:
+                    erreur += f"La taille de {stat_files[inode]['file_name']} a changé en {stat_files[inode]['file_size']}"
+                # # check size
+                if rules[9] and stat_files[inode]['file_atime'] != ref_images[inode]["file_atime"]:
+                    erreur += f"Le atime de {stat_files[inode]['file_name']} a changé en {stat_files[inode]['file_atime']}"
+                # # check atime
+                if rules[10] and stat_files[inode]['file_mtime'] != ref_images[inode]["file_mtime"]:
+                    erreur += f"Le mtime de {stat_files[inode]['file_name']} a changé en {stat_files[inode]['file_mtime']}"
+                # # check mtime
+                #
+                # # check ctime !!!!! a ajouter à la bd !!!!!!!!!!!!!!!!!!!!!!!!!!!
+                if rules[11] and stat_files[inode]['file_md5'] != ref_images[inode]["file_md5"]:
+                    erreur += f"Le hash md5 de {stat_files[inode]['file_name']} a changé en {stat_files[inode]['file_md5']}"
+                # # check md5
+                if rules[12] and stat_files[inode]['file_SHA1'] != ref_images[inode]["file_SHA1"]:
+                    erreur += f"Le hash sha de {stat_files[inode]['file_name']} a changé en {stat_files[inode]['file_SHA1']}"
+                # # check sha
+                if rules[13] and stat_files[inode]['file_ctime'] != ref_images[inode]["file_ctime"]:
+                    erreur += f"Le ctime de {stat_files[inode]['file_name']} a changé en {stat_files[inode]['file_ctime']}"
+                if len(erreur) > 0:
+                    lister.append(erreur)
+
+    except IndexError as e:
+        pass
+        """
+        ça veut dire qu'il y a pas de règles ou qu'un truc est vide jcrois
+        vu que c'est un index out of range il msemble
+        """
+
+    if len(lister) > 0:
+        return lister
 
