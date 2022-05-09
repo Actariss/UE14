@@ -79,15 +79,15 @@ def main():
         ref_images = get_ref_images(db_filename)
 
     config_sa, config_fim = get_configuration_from_db(db_filename)
-    # sa_thread = SaThreadMaster(config_sa, q)
+    sa_thread = SaThreadMaster(config_sa, q)
     fim_thread = FimThreadMaster(config_fim, q, ref_images)
 
     event_thread.start()
-    # sa_thread.start()
+    sa_thread.start()
     fim_thread.start()
 
     event_thread.join()
-    # sa_thread.join()
+    sa_thread.join()
     fim_thread.join()
 
 
