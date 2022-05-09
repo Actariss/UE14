@@ -1,48 +1,38 @@
-import datetime
+import queue
 import threading
 from queue import Queue
 
-from utile import utile_data as data
-from utile.network import Proto
+from cli_panoptes.configuration.ConfigWrapper import ConfigWrapper
+from utile import utile_data
+from utile.Proto import pickler
+from utile.network import DataSender
 
 
 class EventMaster(threading.Thread):
-    def __init__(self, queue: Queue, db_name: str):
+    def __init__(self, q: Queue, client_configuration: ConfigWrapper):
         super().__init__()
 
         self.daemon = True
-        self.queue = queue
-        self.db_conn = data.connect_db(db_name)
+        self.running = True
+        self.queue = q
+        self.client_configuration = client_configuration
+        self.server_ip = client_configuration.value("GENERAL", "SERVER_IP")
+        self.server_port = client_configuration.value("GENERAL", "SERVER_PORT")
 
-    def run(self):
-        while True:
-            if not self.queue.empty():
-                event = self.queue.get()
+    def run(self) -> None:
+        while self.running:
+            try:
+                while not self.queue.empty():
+                    event = self.queue.get()
 
-                protocol = event[0]
-                infos = event[1]
+                    pickled = pickler(event)
 
-                if protocol == Proto.SA_EVENT:
-                    date = str(datetime.datetime.now())
-                    data.simple_insert_db(self.db_conn,
-                                          f"INSERT INTO sa_events (sa_set_id, sa_job_id, datetime_event, except_active)"
-                                          f" VALUES (?,?,?,?)", (infos[0], infos[1], date, True))
-                    # Insert into SA_Event
+                    socket = DataSender(self.server_ip, self.server_port, pickled)
+                    socket.start()
+                    socket.join()
 
-                elif protocol == Proto.FIM_EVENT:
-                    date = str(datetime.datetime.now())
-                    for erreur in infos:
-                        data.simple_insert_db(self.db_conn,
-                                              f"INSERT INTO fim_events (fim_set_id, fim_rule_id, image_id, file_inode, datetime_event, except_msg, except_active)"
-                                              f" VALUES (?,?,?,?,?,?,?)", (1, 1, 1, 1, date, erreur, True))
+            except IOError as e:
+                print(f'[EVENT_THREAD_MASTER]An error occurred in EVThread : {e}')
 
-                    # Insert into FIM_Event
-                elif protocol == Proto.STAT:
-                    # VALUES car les données passées sont sous la forme [inode]:[file_info]
-                    for file_infos in infos.values():
-                        data.insert_db('stat_files', file_infos)
-
-                elif protocol == Proto.IMG:
-                    # VALUES car les données passées sont sous la forme [inode]:[file_info]
-                    for file_infos in infos.values():
-                        data.insert_db('ref_images', file_infos)
+    def kill(self):
+        self.running = False

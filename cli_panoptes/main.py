@@ -4,11 +4,10 @@ from queue import Queue
 from toml_config.core import Config
 
 from cli_panoptes.configuration.ConfigWrapper import ConfigWrapper
-from cli_panoptes.threads.EventThread import EventMaster
+from srv_panoptes.threads.EventThread import EventMaster
 from cli_panoptes.threads.FimThread import FimThreadMaster
-from cli_panoptes.threads.SaThread import SaThreadMaster
 from utile import utile_fim, utile_data
-from utile.network import Proto
+from utile.network import Proto, ConfigReceiver
 
 
 def load_configuration_file() -> ConfigWrapper:
@@ -35,6 +34,11 @@ def get_configuration_from_db(db_filename: str):
 
     return config_sa, config_fim
 
+def get_configuration_from_server():
+    config_receiver = ConfigReceiver()
+    config = config_receiver.run()
+
+    return config
 
 def get_ref_images(db_filename: str):
     ref_images = {}
@@ -59,6 +63,9 @@ def get_ref_images(db_filename: str):
             ref_images[str(row[2])] = file_infos
 
         return ref_images
+
+def get_images_from_server():
+    pass
 
 def main():
     db_filename = 'data/cli_panoptes.sqlite'
