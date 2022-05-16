@@ -12,7 +12,7 @@ class ConfigReceiver:
         self.port = port
         self.queue = queue
         self.proto = proto
-        # self.client_email = client_email
+        # TODO self.client_email = client_email
 
     def run(self):
         client_side_socket = socket.socket()
@@ -40,11 +40,12 @@ class ConfigReceiver:
 
 
 class ImgReceiver:
-    def __init__(self, port: int, queue: Queue, proto: Proto):
+
+    def __init__(self, port: int):#, queue: Queue, proto: Proto):
         self.ip = get_local_ip()
         self.port = port
-        self.queue = queue
-        self.proto = proto
+        # self.queue = queue
+        # self.proto = proto
         # self.client_email = client_email
 
     def run(self):
@@ -53,8 +54,8 @@ class ImgReceiver:
         client_side_socket.listen()
 
         try:
-            self.queue.put([self.proto, [self.ip, self.port]])
-
+            # self.queue.put([self.proto, [self.ip, self.port]])
+            # todo demander a Fred
             (server_connection, server_address) = client_side_socket.accept()
 
             received = server_connection.recv(20)
@@ -70,6 +71,7 @@ class ImgReceiver:
 
         except IOError as e:
             print(f'[IMG_RECEIVER]An error occurred while fetching images: {e}')
+
 
 class DataSender(threading.Thread):
 
@@ -101,12 +103,10 @@ class DataReceiver(threading.Thread):
                 s.bind((self.host, self.port))
                 s.listen()
 
-
-
-
         except IOError as e:
             print(f"Erreur {e}")
 
 
 def get_local_ip():
     return socket.gethostbyname(socket.gethostname())
+

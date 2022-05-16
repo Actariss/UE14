@@ -1,9 +1,11 @@
 import datetime
 import threading
 from queue import Queue
-
+from utile.utile_data import select_db
 from utile import utile_data as data
-from utile.Proto import Proto
+from utile.Proto import *
+import pickle
+from utile import network
 
 
 class EventMaster(threading.Thread):
@@ -18,10 +20,14 @@ class EventMaster(threading.Thread):
         while True:
             if not self.queue.empty():
                 data_pickled = self.queue.get()
-
+                len, crc = verify(data_pickled)
+                data = data_pickled[:20]
+                if len and crc:
+                    event = [pickle.load(data)]
                 # TODO verify et pickle.load()
-                event = []
-
+                else:
+                    print("Il y a eu un problème pendant l'envoi")
+                    pass
                 protocol = event[0]
                 infos = event[1]
 
@@ -51,6 +57,9 @@ class EventMaster(threading.Thread):
                         data.insert_db('ref_images', file_infos)
 
                 elif protocol == Proto.LD_SA:
+                    config_sa = data.select_db(self.db_conn,
+                                               'SELECT sa_set_id, se.sa_job_id, sa_set_name, schedule, sa_job_name, command_script, expected_result, alert_message FROM sa_sets se JOIN sa_jobs sj ON se.sa_job_id = sj.sa_job_id',
+                                               ())
 
                     pass
 
@@ -59,5 +68,29 @@ class EventMaster(threading.Thread):
                     pass
 
                 elif protocol == Proto.LD_IMG:
+                    ref_images = {}
+                    tuples_ref_images = data.select_db(self.db_conn,
+                                                       'SELECT max(datetime_image), * FROM ref_images GROUP BY '
+                                                       'file_inode',
+                                                       ())
+                    for row in tuples_ref_images:
+                        file_infos = {}
+                        file_infos['file_inode'] = row[2]
+                        file_infos['parent_id'] = row[4]
+                        file_infos['file_name'] = row[5]
+                        file_infos['file_type'] = row[6]
+                        file_infos['file_mode'] = row[7]
+                        file_infos['file_nlink'] = row[8]
+                        file_infos['file_uid'] = row[9]
+                        file_infos['file_gid'] = row[10]
+                        file_infos['file_size'] = row[11]
+                        file_infos['file_atime'] = row[12]
+                        file_infos['file_mtime'] = row[13]
+                        file_infos['file_ctime'] = row[14]
+                        file_infos['file_md5'] = row[15]
+                        file_infos['file_SHA1'] = row[16]
+                        ref_images[str(row[2])] = file_infos
 
+                    network.DataSender(infos[0],infos[1],pickler(ref_images))
+                    #todo le client evoi le host et le port au serveur, celui-ci le met ici au dessus
                     pass

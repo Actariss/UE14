@@ -3,6 +3,7 @@ from glob import iglob
 from hashlib import md5, sha1
 from stat import *
 from time import time
+import re
 
 from utile import utile_data as data
 
@@ -25,6 +26,9 @@ def get_file_infos(filename):
     file_infos['file_md5'] = md5_file(filename)
     file_infos['file_SHA1'] = sha1_file(filename)
     return file_infos
+
+
+
 
 
 def type_file(mode):
@@ -92,7 +96,7 @@ def compare_image(stat_files, ref_images, rules):
             if inode in ref_images.keys():
                 erreur = ""
     # where start_inode={tuple_fichier_scanne[1]}")
-                if rules[2] and stat_files[inode]["file_name"] != ref_images[inode]["file_name"]:
+                if rules[2] and re.match('/([^/]+)/?$', stat_files[inode]["file_name"]).group(1) != re.match('/([^/]+)/?$', ref_images[inode]["file_name"]).group(1):
                     erreur += f"{ref_images[inode]['file_name']} a changé de nom en {stat_files[inode]['file_name']} "
                 # pour faire effet, il faut arrete de remplacer les anciennes images par des nouvelles dans le main
                 if rules[1] and stat_files[inode]["parent_id"] != ref_images[inode]["parent_id"]:
