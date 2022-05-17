@@ -1,11 +1,8 @@
 import datetime
-import threading
-from queue import Queue
-from utile.utile_data import select_db
+
 from utile import utile_data as data
 from utile.Proto import *
-import pickle
-from utile import network
+from utile.network import *
 
 
 class EventMaster(threading.Thread):
@@ -19,15 +16,7 @@ class EventMaster(threading.Thread):
     def run(self):
         while True:
             if not self.queue.empty():
-                data_pickled = self.queue.get()
-                len, crc = verify(data_pickled)
-                data = data_pickled[:20]
-                if len and crc:
-                    event = [pickle.load(data)]
-                # TODO verify et pickle.load()
-                else:
-                    print("Il y a eu un problème pendant l'envoi")
-                    pass
+                event = self.queue.get()
                 protocol = event[0]
                 infos = event[1]
 
@@ -36,7 +25,6 @@ class EventMaster(threading.Thread):
                     data.simple_insert_db(self.db_conn,
                                           f"INSERT INTO sa_events (sa_set_id, sa_job_id, datetime_event, except_active)"
                                           f" VALUES (?,?,?,?)", (infos[0], infos[1], date, True))
-                    # Insert into SA_Event
 
                 elif protocol == Proto.FIM_EVENT:
                     date = str(datetime.datetime.now())
@@ -60,12 +48,19 @@ class EventMaster(threading.Thread):
                     config_sa = data.select_db(self.db_conn,
                                                'SELECT sa_set_id, se.sa_job_id, sa_set_name, schedule, sa_job_name, command_script, expected_result, alert_message FROM sa_sets se JOIN sa_jobs sj ON se.sa_job_id = sj.sa_job_id',
                                                ())
-
-                    pass
+                    pickled_data = pickler(config_sa)
+                    data_sender = DataSender(infos[0], infos[1], pickled_data)
+                    data_sender.start()
+                    data_sender.join()
 
                 elif protocol == Proto.LD_FIM:
-
-                    pass
+                    config_fim = data.select_db(self.db_conn,
+                                                'SELECT  * FROM fim_rules ru JOIN fim_sets fs ON ru.fim_rule_id = fs.fim_rule_id',
+                                                ())
+                    pickled_data = pickler(config_fim)
+                    data_sender = DataSender(infos[0], infos[1], pickled_data)
+                    data_sender.start()
+                    data_sender.join()
 
                 elif protocol == Proto.LD_IMG:
                     ref_images = {}
@@ -74,23 +69,14 @@ class EventMaster(threading.Thread):
                                                        'file_inode',
                                                        ())
                     for row in tuples_ref_images:
-                        file_infos = {}
-                        file_infos['file_inode'] = row[2]
-                        file_infos['parent_id'] = row[4]
-                        file_infos['file_name'] = row[5]
-                        file_infos['file_type'] = row[6]
-                        file_infos['file_mode'] = row[7]
-                        file_infos['file_nlink'] = row[8]
-                        file_infos['file_uid'] = row[9]
-                        file_infos['file_gid'] = row[10]
-                        file_infos['file_size'] = row[11]
-                        file_infos['file_atime'] = row[12]
-                        file_infos['file_mtime'] = row[13]
-                        file_infos['file_ctime'] = row[14]
-                        file_infos['file_md5'] = row[15]
-                        file_infos['file_SHA1'] = row[16]
+                        file_infos = {'file_inode': row[2], 'parent_id': row[4], 'file_name': row[5],
+                                      'file_type': row[6], 'file_mode': row[7], 'file_nlink': row[8],
+                                      'file_uid': row[9], 'file_gid': row[10], 'file_size': row[11],
+                                      'file_atime': row[12], 'file_mtime': row[13], 'file_ctime': row[14],
+                                      'file_md5': row[15], 'file_SHA1': row[16]}
                         ref_images[str(row[2])] = file_infos
 
-                    network.DataSender(infos[0],infos[1],pickler(ref_images))
-                    #todo le client evoi le host et le port au serveur, celui-ci le met ici au dessus
-                    pass
+                    pickled_data = pickler(ref_images)
+                    data_sender = DataSender(infos[0],infos[1],pickled_data)
+                    data_sender.start()
+                    data_sender.join()

@@ -1,6 +1,6 @@
 import os
 
-from threads import EventThread
+from threads.EventThread import EventMaster
 
 from toml_config.core import Config
 
@@ -21,12 +21,19 @@ def load_configuration_file() -> ConfigWrapper:
 
 
 def main():
-    client_configuration = load_configuration_file()
-    server_port = client_configuration.value("GENERAL", "SERVER_PORT")
-    db_name = client_configuration.value("GENERAL", "DB_NAME")
-    q = DataReceiver(server_port, "192.168.1.7")
-    EventThread.EventMaster(q, db_name)
+    server_configuration = load_configuration_file()
+    server_port = server_configuration.value("GENERAL", "SERVER_PORT")
+    db_name = server_configuration.value("GENERAL", "DB_NAME")
 
+    q = Queue()
+    client_handler = ConThreadServer(server_port, q)
+    client_handler.start()
+
+    event_thread = EventMaster(q, db_name)
+    event_thread.start()
+
+    client_handler.join()
+    event_thread.join()
 
 if __name__ == '__main__':
     main()

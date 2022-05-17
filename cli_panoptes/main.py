@@ -1,15 +1,13 @@
 import os
-from queue import Queue
 
 from toml_config.core import Config
 
 from cli_panoptes.configuration.ConfigWrapper import ConfigWrapper
+from cli_panoptes.threads.FimThread import FimThreadMaster
 from cli_panoptes.threads.SaThread import SaThreadMaster
 from srv_panoptes.threads.EventThread import EventMaster
-from cli_panoptes.threads.FimThread import FimThreadMaster
-from utile import utile_fim, utile_data
+from utile import utile_fim
 from utile.network import *
-from utile.Proto import *
 
 
 def load_configuration_file() -> ConfigWrapper:
@@ -29,32 +27,10 @@ def load_configuration_file() -> ConfigWrapper:
     return ConfigWrapper(client_configuration)
 
 
-def get_configuration_from_db(db_filename: str):
-    with utile_data.connect_db(db_filename) as db_conn:
-        config_sa = utile_data.select_db(db_conn,
-                                         'SELECT sa_set_id, se.sa_job_id, sa_set_name, schedule, sa_job_name, command_script, expected_result, alert_message FROM sa_sets se JOIN sa_jobs sj ON se.sa_job_id = sj.sa_job_id',
-                                         ())
-        config_fim = utile_data.select_db(db_conn,
-                                          'SELECT  * FROM fim_rules ru JOIN fim_sets fs ON ru.fim_rule_id = fs.fim_rule_id',
-                                          ())
-
-    return config_sa, config_fim
-
-
-def get_configuration_from_server():
-    config_receiver = ConfigReceiver()
-    config = config_receiver.run()
-    # todo demander configuration au serveur
-    return config
-
-
-def get_images_from_server(port_srv, ip_srv, contact_port):
-    contact_me = [get_local_ip(), contact_port]
-    data = [Proto.LD_IMG, contact_me]
-    DataSender(ip_srv, port_srv, pickler(data))
-    image = ImgReceiver(contact_port)
-    return image
-    # todo demander l'image au serveur
+def get_data_from_server(port: int, queue: Queue, proto: Proto):
+    data_receiver = DataReceiver(port, queue, proto)
+    data = data_receiver.request()
+    return data
 
 
 def main():
@@ -75,9 +51,11 @@ def main():
         client_configuration.set({'SCAN_AT_LAUNCH': False})
         client_configuration.save()
     else:
-        ref_images = get_images_from_server(srv_port, srv_ip, config_srv_port)
+        ref_images = get_data_from_server(config_srv_port, q, Proto.LD_IMG)
 
-    config_sa, config_fim = get_configuration_from_db(db_filename)
+    config_sa = get_data_from_server(config_srv_port, q, Proto.LD_SA)
+    config_fim = get_data_from_server(config_srv_port, q, Proto.LD_FIM)
+
     sa_thread = SaThreadMaster(config_sa, q)
     fim_thread = FimThreadMaster(config_fim, q, ref_images)
 
