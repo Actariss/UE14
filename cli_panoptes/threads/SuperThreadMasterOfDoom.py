@@ -10,11 +10,12 @@ from cli_panoptes.threads.SaThread import SaThreadMaster
 from utile.network import DataReceiver
 from utile.Proto import Proto
 
-class SuperThreadMasterOfDoom(threading.Thread):
 
-    def __int__(self, q : Queue, client_configuration : ConfigWrapper, timeout: int = 60):
+class SuperThreadMasterOfDoom(threading.Thread):
+    def __int__(self, q: Queue, client_configuration: ConfigWrapper, timeout: int = 60):
         super().__init__()
 
+        self.daemon = True
         self.queue = q
         self.client_configuration = client_configuration
         self.config_server_port = self.client_configuration.value('GENERAL', 'CONFIG_SERVER_PORT')
@@ -65,9 +66,18 @@ class SuperThreadMasterOfDoom(threading.Thread):
         self.ev_master.join()
 
     def sa_reload(self, new_sa_config):
-        pass
+        self.sa_master.stop()
+        self.last_sa_config = new_sa_config
+
+        threadsa = SaThreadMaster(self.last_sa_config, self.queue)
+        threadsa.start()
 
     def fim_reload(self, new_fim_config, new_ref_images):
-        pass
+        self.fim_master.stop()
+        self.last_fim_config = new_fim_config
+        self.last_ref_images = new_ref_images
+
+        threadfim = FimThreadMaster(self.last_fim_config, self.queue, self.last_ref_images)
+        threadfim.start()
 
 

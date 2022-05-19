@@ -6,6 +6,7 @@ from cli_panoptes.configuration.ConfigWrapper import ConfigWrapper
 from cli_panoptes.threads.FimThread import FimThreadMaster
 from cli_panoptes.threads.SaThread import SaThreadMaster
 from srv_panoptes.threads.EventThread import EventMaster
+from cli_panoptes.threads.SuperThreadMasterOfDoom import SuperThreadMasterOfDoom
 from utile import utile_fim
 from utile.network import *
 
@@ -14,7 +15,7 @@ def load_configuration_file() -> ConfigWrapper:
     if not os.path.isfile('./configuration/app.config_client.toml'):
         client_configuration = Config('./configuration/app.config_client.toml')
         client_configuration.add_section("GENERAL").set(
-            SERVER_IP="192.168.1.7",
+            SERVER_IP="127.0.0.1",
             SERVER_PORT=8880,
             CONFIG_SERVER_PORT=8881,
             SCAN_AT_LAUNCH=True,
@@ -58,6 +59,8 @@ def main():
 
     sa_thread = SaThreadMaster(config_sa, q)
     fim_thread = FimThreadMaster(config_fim, q, ref_images)
+    super_thread = SuperThreadMasterOfDoom()
+
 
     event_thread.start()
     sa_thread.start()

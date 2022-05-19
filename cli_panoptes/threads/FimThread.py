@@ -16,24 +16,28 @@ class FimThreadMaster(threading.Thread):
         self.config_fim = config_fim
         self.queue = queue
         self.ref_images = ref_images
+        self.threads = []
 
     def run(self):
-        threads = []
 
         for row in self.config_fim:
             slave = FimThreadSlave(row, self.queue, self.ref_images)
-            threads.append(slave)
+            self.threads.append(slave)
             slave.start()
 
-        run = len(threads) == 0
+        run = len(self.threads) == 0
 
         while run:
             run = False
-            for thread in threads:
+            for thread in self.threads:
                 run = thread.isAlive()
 
-        for thread in threads:
+        for thread in self.threads:
             thread.join()
+
+    def stop(self):
+        for thread in self.threads:
+            thread.stop()
 
 
 class FimThreadSlave(threading.Thread):
@@ -65,10 +69,11 @@ class FimThreadSlave(threading.Thread):
         self.fim_set_id = fim_config[18]
         self.fim_set_name = fim_config[20]
         self.schedule = fim_config[21]
+        self.running = True
 
     def run(self):
         print(f'Starting thread : {self.path}')
-        while True:
+        while self.running:
 
             stat_files = utile_fim.capture_image_stat_files(self.path)
             self.queue.put([Proto.STAT, stat_files])
@@ -79,3 +84,6 @@ class FimThreadSlave(threading.Thread):
                 self.queue.put([Proto.FIM_EVENT, info])
 
             time.sleep(self.schedule)
+
+    def stop(self):
+        self.running = False

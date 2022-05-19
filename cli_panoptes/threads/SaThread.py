@@ -12,28 +12,32 @@ class SaThreadMaster(threading.Thread):
 
         self.config_sa = config_sa
         self.queue = queue
+        self.threads = []
 
     def run(self):
-        threads = []
 
         for row in self.config_sa:
             slave = SaThreadSlave(row, self.queue)
-            threads.append(slave)
+            self.threads.append(slave)
             slave.start()
 
-        run = len(threads) == 0
+        run = len(self.threads) == 0
 
         while run:
             run = False
-            for thread in threads:
+            for thread in self.threads:
                 run = thread.isAlive()
 
-        for thread in threads:
+        for thread in self.threads:
             thread.join()
+
+    def stop(self):
+        for thread in self.threads:
+            thread.stop()
 
 
 class SaThreadSlave(threading.Thread):
-    def __init__(self, sa_config: any, queue: Queue ):
+    def __init__(self, sa_config: any, queue: Queue):
         super().__init__()
         self.daemon = True
 
@@ -46,6 +50,7 @@ class SaThreadSlave(threading.Thread):
         self.command_script = self.sa_config[5]
         self.expected_result = self.sa_config[6]
         self.alert_message = self.sa_config[7]
+        self.running = True
 
         self.queue = queue
 
@@ -68,3 +73,6 @@ class SaThreadSlave(threading.Thread):
             # Sleep
             time.sleep(self.schedule)
             # /!\ Le sleep doit être modifier avec les données de la BD /!\
+
+    def stop(self):
+        self.running = False
