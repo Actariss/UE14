@@ -16,28 +16,29 @@ class DataReceiver:
         # TODO self.client_email = client_email
 
     def request(self):
-        client_side_socket = socket.socket()
-        client_side_socket.bind((self.ip, self.port))
-        client_side_socket.listen()
+        with socket.socket() as client_side_socket:
+            print(self.ip)
+            client_side_socket.bind((self.ip, self.port))
+            client_side_socket.listen()
 
-        try:
-            self.queue.put([self.proto, [self.ip, self.port]])
+            try:
+                self.queue.put([self.proto, [self.ip, self.port]])
 
-            (server_connection, server_address) = client_side_socket.accept()
+                (server_connection, server_address) = client_side_socket.accept()
 
-            received = server_connection.recv(20)
-            length = int.from_bytes(received[0:4], 'big')
-            received += server_connection.recv(length)
+                received = server_connection.recv(20)
+                length = int.from_bytes(received[0:4], 'big')
+                received += server_connection.recv(length)
 
-            if received and verify(received):
-                print(f"[CONFIG]Receiving valid data from {server_address} : {received}")
-                config = pickle.loads(received[20:])
-                return config
+                if received and verify(received):
+                    print(f"[CONFIG]Receiving valid data from {server_address} : {received}")
+                    config = pickle.loads(received[20:])
+                    return config
 
-            return {}
+                return {}
 
-        except IOError as e:
-            print(f'[CONFIG_RECEIVER]An error occurred while fetching configuration: {e}')
+            except IOError as e:
+                print(f'[CONFIG_RECEIVER]An error occurred while fetching configuration: {e}')
 
 
 class DataSender(threading.Thread):

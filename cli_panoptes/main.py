@@ -52,10 +52,10 @@ def main():
         client_configuration.set({'SCAN_AT_LAUNCH': False})
         client_configuration.save()
     else:
-        ref_images = get_data_from_server(srv_port, q, Proto.LD_IMG)
+        ref_images = get_data_from_server(config_srv_port, q, Proto.LD_IMG)
 
-    config_sa = get_data_from_server(srv_port, q, Proto.LD_SA)
-    config_fim = get_data_from_server(srv_port, q, Proto.LD_FIM)
+    config_sa = get_data_from_server(config_srv_port, q, Proto.LD_SA)
+    config_fim = get_data_from_server(config_srv_port, q, Proto.LD_FIM)
     print("lancement")
     sa_thread = SaThreadMaster(config_sa, q)
     fim_thread = FimThreadMaster(config_fim, q, ref_images)
