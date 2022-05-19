@@ -22,6 +22,7 @@ class EventMaster(threading.Thread):
     def run(self) -> None:
         while self.running:
             try:
+                print("[cli_event] q is empty")
                 while not self.queue.empty():
                     print("[cli_event] Quelquechose dans la q")
                     event = self.queue.get()
