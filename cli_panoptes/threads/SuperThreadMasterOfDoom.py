@@ -12,7 +12,7 @@ from utile.Proto import Proto
 
 
 class SuperThreadMasterOfDoom(threading.Thread):
-    def __int__(self, q: Queue, client_configuration: ConfigWrapper, timeout: int = 60):
+    def __init__(self, q: Queue, client_configuration: ConfigWrapper, timeout: int = 60):
         super().__init__()
 
         self.daemon = True

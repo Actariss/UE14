@@ -59,16 +59,17 @@ def main():
 
     sa_thread = SaThreadMaster(config_sa, q)
     fim_thread = FimThreadMaster(config_fim, q, ref_images)
-    super_thread = SuperThreadMasterOfDoom()
-
+    super_thread = SuperThreadMasterOfDoom(q, client_configuration)
 
     event_thread.start()
     sa_thread.start()
     fim_thread.start()
+    super_thread.start()
 
     event_thread.join()
     sa_thread.join()
     fim_thread.join()
+    super_thread.join()
 
 
 if __name__ == '__main__':
