@@ -5,7 +5,7 @@ from toml_config.core import Config
 from cli_panoptes.configuration.ConfigWrapper import ConfigWrapper
 from cli_panoptes.threads.FimThread import FimThreadMaster
 from cli_panoptes.threads.SaThread import SaThreadMaster
-from srv_panoptes.threads.EventThread import EventMaster
+from cli_panoptes.threads.EventThread import EventMaster
 from cli_panoptes.threads.SuperThreadMasterOfDoom import SuperThreadMasterOfDoom
 from utile import utile_fim
 from utile.network import *
@@ -44,7 +44,7 @@ def main():
     srv_ip = client_configuration.value('GENERAL', 'SERVER_IP')
 
     q = Queue()
-    event_thread = EventMaster(q, db_filename)
+    event_thread = EventMaster(q, client_configuration)
 
     if scan_at_launch:
         ref_images = utile_fim.capture_image_de_reference(path_ref_image)

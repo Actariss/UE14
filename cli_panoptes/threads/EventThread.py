@@ -23,6 +23,7 @@ class EventMaster(threading.Thread):
         while self.running:
             try:
                 while not self.queue.empty():
+                    print("[cli_event] Quelquechose dans la q")
                     event = self.queue.get()
 
                     pickled = pickler(event)

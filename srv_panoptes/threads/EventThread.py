@@ -16,6 +16,7 @@ class EventMaster(threading.Thread):
     def run(self):
         while True:
             if not self.queue.empty():
+                print("[srv_event] Packet bien reçus")
                 event = self.queue.get()
                 protocol = event[0]
                 infos = event[1]
