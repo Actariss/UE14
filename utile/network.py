@@ -9,7 +9,7 @@ from utile.Proto import Proto, verify
 
 class DataReceiver:
     def __init__(self, port: int, queue: Queue, proto: Proto):
-        self.ip = get_local_ip()
+        self.ip = '192.168.254.6'#get_local_ip()
         self.port = port
         self.queue = queue
         self.proto = proto
@@ -17,6 +17,7 @@ class DataReceiver:
 
     def request(self):
         with socket.socket() as client_side_socket:
+            client_side_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             print(self.ip)
             client_side_socket.bind((self.ip, self.port))
             client_side_socket.listen()

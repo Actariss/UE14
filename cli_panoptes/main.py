@@ -64,7 +64,6 @@ def main():
     fim_thread = FimThreadMaster(config_fim, q, ref_images)
     super_thread = SuperThreadMasterOfDoom(q, client_configuration)
 
-
     sa_thread.start()
     fim_thread.start()
     super_thread.start()
