@@ -36,8 +36,8 @@ class SuperThreadMasterOfDoom(threading.Thread):
 
             self.last_ref_images = DataReceiver(self.config_server_port, q, Proto.LD_IMG).request()
 
-        self.sa_master = SaThreadMaster(q, self.last_sa_config)
-        self.fim_master = FimThreadMaster(q, self.last_fim_config, self.last_ref_images)
+        self.sa_master = SaThreadMaster(self.last_sa_config, q )
+        self.fim_master = FimThreadMaster(self.last_fim_config, q, self.last_ref_images)
 
     def run(self):
         """Permet de démarrer le thread"""

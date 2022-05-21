@@ -22,9 +22,8 @@ class EventMaster(threading.Thread):
     def run(self) -> None:
         while self.running:
             try:
-                print("[cli_event] q is empty")
+
                 while not self.queue.empty():
-                    print("[cli_event] Quelquechose dans la q")
                     event = self.queue.get()
 
                     pickled = pickler(event)
@@ -32,6 +31,7 @@ class EventMaster(threading.Thread):
                     socket = DataSender(self.server_ip, self.server_port, pickled)
                     socket.start()
                     socket.join()
+                    print("envoyé !")
 
             except IOError as e:
                 print(f'[EVENT_THREAD_MASTER]An error occurred in EVThread : {e}')

@@ -1,4 +1,5 @@
 import datetime
+import sqlite3
 
 from utile import utile_data as data
 from utile.Proto import *
@@ -9,6 +10,7 @@ class EventMaster(threading.Thread):
     def __init__(self, queue: Queue, db_name: str):
         super().__init__()
 
+        self.db_name = db_name
         self.daemon = True
         self.queue = queue
         self.db_conn = data.connect_db(db_name)
@@ -20,7 +22,7 @@ class EventMaster(threading.Thread):
                 event = self.queue.get()
                 protocol = event[0]
                 infos = event[1]
-
+                print("[event]", protocol, infos)
                 if protocol == Proto.SA_EVENT:
                     date = str(datetime.datetime.now())
                     data.simple_insert_db(self.db_conn,
@@ -41,9 +43,14 @@ class EventMaster(threading.Thread):
                         data.insert_db('stat_files', file_infos)
 
                 elif protocol == Proto.IMG:
+                    print("[event_thread] insertion de l'image")
                     # VALUES car les données passées sont sous la forme [inode]:[file_info]
                     for file_infos in infos.values():
-                        data.insert_db('ref_images', file_infos)
+                        try :
+                            data.insert_db('ref_images', file_infos)
+                            print(file_infos)
+                        except sqlite3.Error as e:
+                            print("erreur", e)
 
                 elif protocol == Proto.LD_SA:
                     config_sa = data.select_db(self.db_conn,

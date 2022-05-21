@@ -28,10 +28,10 @@ def main():
     q = Queue()
     client_handler = ConThreadServer(server_port, q)
     client_handler.start()
-
+    print('client handler lancé')
     event_thread = EventMaster(q, db_name)
     event_thread.start()
-
+    print("event thread lancé")
     client_handler.join()
     event_thread.join()
 

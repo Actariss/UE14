@@ -1,6 +1,6 @@
 import sqlite3
 
-DB = "../cli_panoptes/data/cli_panoptes.sqlite"
+DB = "../srv_panoptes/data/srv_panoptes.sqlite"
 
 
 def connect_db(db_filename=DB):

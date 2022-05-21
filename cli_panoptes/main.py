@@ -9,7 +9,8 @@ from cli_panoptes.threads.EventThread import EventMaster
 from cli_panoptes.threads.SuperThreadMasterOfDoom import SuperThreadMasterOfDoom
 from utile import utile_fim
 from utile.network import *
-
+from utile.Proto import Proto
+from utile import utile_data
 
 def load_configuration_file() -> ConfigWrapper:
     if not os.path.isfile('./configuration/app.config_client.toml'):
@@ -17,7 +18,7 @@ def load_configuration_file() -> ConfigWrapper:
         client_configuration.add_section("GENERAL").set(
             SERVER_IP="127.0.0.1",
             SERVER_PORT=8880,
-            CONFIG_SERVER_PORT=8881,
+            CONFIG_SERVER_PORT=9990,
             SCAN_AT_LAUNCH=True,
             PATH="/home/q210079/Desktop/**",
         )
@@ -45,23 +46,25 @@ def main():
 
     q = Queue()
     event_thread = EventMaster(q, client_configuration)
-
+    event_thread.start()
     if scan_at_launch:
         ref_images = utile_fim.capture_image_de_reference(path_ref_image)
         q.put([Proto.IMG, ref_images])
+        print(f"envoi de {ref_images}")
         client_configuration.set({'SCAN_AT_LAUNCH': False})
         client_configuration.save()
     else:
+        print("[cli_main] demande d'image")
         ref_images = get_data_from_server(config_srv_port, q, Proto.LD_IMG)
+        print(f"[cli_main] ref image reçue \n {ref_images}")
 
     config_sa = get_data_from_server(config_srv_port, q, Proto.LD_SA)
     config_fim = get_data_from_server(config_srv_port, q, Proto.LD_FIM)
-    print("lancement")
     sa_thread = SaThreadMaster(config_sa, q)
     fim_thread = FimThreadMaster(config_fim, q, ref_images)
     super_thread = SuperThreadMasterOfDoom(q, client_configuration)
 
-    event_thread.start()
+
     sa_thread.start()
     fim_thread.start()
     super_thread.start()
